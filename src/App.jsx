@@ -6,22 +6,28 @@ import './main.css';
 import './sidebar.css';
 import Notes from './components/Notes';
 import RadioButton from './components/RadioButton';
+import Loader from './components/Loader';
 
 function App() {
   const [title, setTitle] = React.useState('');
   const [notes, setNotes] = React.useState('');
   const [allNotes, setAllNotes] = React.useState([]);
   const [selectedValue, setSelectedValue] = React.useState('all');
+  const [loading, setLoading] = React.useState(false);
 
   async function getAllNotes() {
+    setLoading(true);
     const response = await api.get('/annotations');
     setAllNotes(response.data);
+    setLoading(false);
   }
+
   React.useEffect(() => {
     getAllNotes();
   }, []);
 
   async function handleSubmit(e) {
+    setLoading(true);
     e.preventDefault();
 
     const response = await api.post('/annotations', {
@@ -33,29 +39,42 @@ function App() {
     setTitle('');
     setNotes('');
     setAllNotes([...allNotes, response.data]);
+    setLoading(false);
   }
 
   async function handleDelete(id) {
+    setLoading(true);
+
     const deletedNote = await api.delete(`/annotations/${id}`);
     if (deletedNote) {
       setAllNotes(allNotes.filter((note) => note._id !== id));
     }
+
+    setLoading(false);
   }
 
   async function handlePriority(id) {
+    setLoading(true);
+
     const changeNote = await api.post(`/priorities/${id}`);
     if (changeNote) {
       getAllNotes();
     }
+
+    setLoading(false);
   }
 
   async function loadNotes(option) {
+    setLoading(true);
+
     const params = { priority: option };
     const response = await api.get(`/priorities/`, { params });
 
     if (response) {
       setAllNotes(response.data);
     }
+
+    setLoading(false);
   }
 
   async function handleChange(e) {
@@ -66,7 +85,6 @@ function App() {
       getAllNotes();
     }
   }
-
   return (
     <div id="app">
       <aside>
@@ -102,18 +120,23 @@ function App() {
           handleChangeApp={handleChange}
         />
       </aside>
+
       <main>
-        <ul>
-          {allNotes &&
-            allNotes.map((note) => (
-              <Notes
-                data={note}
-                key={note._id}
-                handleDelete={handleDelete}
-                handlePriority={handlePriority}
-              />
-            ))}
-        </ul>
+        {!loading ? (
+          <ul>
+            {allNotes &&
+              allNotes.map((note) => (
+                <Notes
+                  data={note}
+                  key={note._id}
+                  handleDelete={handleDelete}
+                  handlePriority={handlePriority}
+                />
+              ))}
+          </ul>
+        ) : (
+          <Loader />
+        )}
       </main>
     </div>
   );

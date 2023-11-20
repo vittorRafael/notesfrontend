@@ -1,6 +1,7 @@
 main{
   flex: 1;
-  margin-left: 375px
+  margin-left: 375px;
+  position: relative;
 }
 
 main ul{
